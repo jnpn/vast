@@ -105,6 +105,16 @@ class Meta(ast.NodeVisitor):
     generic_visit from the API.
     '''
 
+    def debug(self, node):
+        '''Debug helper, ~unsound code.'''
+        nodename = node.__class__.__name__
+        visitorname = self.__class__.__name__
+        nodefields = list(ast.iter_fields(node))
+        node_ = list(ast.iter_child_nodes(node))
+        print('[warn]', nodename, nodefields, node_)
+        print('[warn]', '<visit_%s not implemented in %s>' \
+              % (nodename, visitorname))
+
     def visicat(self, subs, sep='.'):
         return sep.join([self.visit(sub) for sub in (subs or [])])
 
@@ -135,13 +145,6 @@ class Meta(ast.NodeVisitor):
         elif type(node) is type(None):
             return 'None'
 
-        nodename = node.__class__.__name__
-        visitorname = self.__class__.__name__
-        nodefields = list(ast.iter_fields(node))
-        node_ = list(ast.iter_child_nodes(node))
-        # print('[warn]', nodename, nodefields, node_)
-        # print('[warn]', '<visit_%s not implemented in %s>' \
-        #       % (nodename, visitorname))
         return self.meta_visit(node)
 
     def visit_Module(self, m):
