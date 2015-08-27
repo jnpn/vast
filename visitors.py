@@ -105,10 +105,15 @@ class Elispy(Meta):
         os = self.visit(os)
         return '(each (lambda (%s) %s %s) %s)' % (t, bs, os, i)
 
-    def visit_ListComp(self, l):
-        # print(list((n, self.visit(e)) for n, e in ast.iter_fields(l)))
-        # return '(@TOFIX filter (...) (map (...) ...))'
-        return ' '.join([self.visit(node) for name, node in ast.iter_fields(l)])
+    # def visit_ListComp(self, l):
+    #     for gen in l.generators:
+    #         '''(map (lambda (<gen.bs>) @rec)
+    #              (filter (lambda (gen.bs) gen.filter)
+    #                  gen.iter))'''
+
+    #     print(list((n, self.visit(e)) for n, e in ast.iter_fields(l)))
+    #     return '(@TOFIX filter (...) (map (...) ...))'
+    #     return ' '.join([self.visit(node) for name, node in ast.iter_fields(l)])
 
     def visit_Comprehension(self, c):
         t = self.visit(c.target)
