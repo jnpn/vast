@@ -25,7 +25,8 @@ def premain(visitor):
         print('```')
         print(source)
         print('```')
-        visitor().visit(ast.parse(source))
+        v = visitor().visit(ast.parse(source))
+        print(v)
         print()
 
 def emacs_eval(elisp):
@@ -39,6 +40,9 @@ def emacs_eval(elisp):
                   , stderr=PIPE
                   , stdout=PIPE)
     return emacs.stderr.read().decode('utf8')
+
+def talk(s):
+    return list(ast.walk(ast.parse(s)))
 
 def elispy(s):
     ''' parse s then pass it to the Elispy visitor '''
