@@ -2,6 +2,11 @@ import ast
 
 class Generic(ast.NodeVisitor):
 
+    '''
+    Traditional AST recursive traversal `a la` Lisp
+    Not a visitor actually.
+    '''
+
     def children(self, node):
         return [node.__getattribute__(f) for f in node._fields]
 
@@ -31,6 +36,8 @@ class Generic(ast.NodeVisitor):
 
 
 class Dummy(ast.NodeVisitor):
+
+    '''Useless visitor as grammar learning code.'''
 
     def visit_Sub(self, s):
         print('SUB')
@@ -93,6 +100,11 @@ class Dummy(ast.NodeVisitor):
 
 class Meta(ast.NodeVisitor):
 
+    '''
+    Meta visitor, ugly variant of Generic, but uses the official
+    generic_visit from the API.
+    '''
+
     def visicat(self, subs, sep='.'):
         return sep.join([self.visit(sub) for sub in (subs or [])])
 
@@ -138,6 +150,11 @@ class Meta(ast.NodeVisitor):
         return b
     
 class Elispy(Meta):
+
+    '''
+    Elisp pretty printer (partial), inherits generic printer
+    from Meta.
+    '''
 
     def visit_Module(self, m):
         b = ' '.join([self.visit(_) for _ in m.body])
