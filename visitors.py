@@ -91,34 +91,6 @@ class Dummy(ast.NodeVisitor):
         for _ in i.orelse:
             self.visit(_)
 
-# class Meta(ast.NodeVisitor):
-
-#     def visicat(self, subs, sep='.'):
-#         return sep.join([self.visit(sub) for sub in (subs or [])])
-
-#     def meta_visit(self, node):
-#         def __(e):
-#             if type(e) is type([]):
-#                 return self.visicat(e, sep=' ')
-#             elif type(e) is type(''):
-#                 return e
-#             else:
-#                 return self.visit(e)
-#         def _(f):
-#             n, e = f
-#             # se = self.visicat(e, sep=' ') if type(e) is type([]) else self.visit(e)
-#             se = __(e)
-#             return '%s=%s' % (n, se)
-#         import pdb; pdb.set_trace()
-        
-#         fields = ast.iter_fields(node)
-#         nodename = node.__class__.__name__
-#         sfields = ' '.join(_(f) for f in fields)
-#         return '<meta:%s %s>' % (nodename, sfields)
-
-#     def generic_visit(self, node):
-#         return self.meta_visit(node)
-
 class Meta(ast.NodeVisitor):
 
     def visicat(self, subs, sep='.'):
@@ -165,48 +137,7 @@ class Meta(ast.NodeVisitor):
         print(b)
         return b
     
-class Elispy(ast.NodeVisitor):
-
-    # helper
-
-    def visicat(self, subs, sep='.'):
-        return sep.join([self.visit(sub) for sub in (subs or [])])
-
-    def meta_visit(self, node):
-        def _(f):
-            n, e = f
-            se = self.visicat(e, sep=' ') if type(e) is type([]) else self.visit(e)
-            return '%s=%s' % (n, se)
-        fields = ast.iter_fields(node)
-        return '<meta:%s %s>' % (node.__class__.__name__
-                                 , ' '.join(_(__) for __ in fields))
-
-    def generic_visit(self, node):
-        # return super().generic_visit(node)
-        # print('[warn]', node)
-
-        if type(node) is type([]):
-            if len(node) == 1:
-                node = node[0]
-            elif len(node) == 0:
-                print('[error]', 'node is an empty list')
-            else:
-                print('[warn]', 'node is a list of size > 1, elements above 1 are ignored (@TOFIX)')
-        elif type(node) is type(''):
-            return node
-        elif type(node) is type(None):
-            return 'None'
-
-        nodename = node.__class__.__name__
-        visitorname = self.__class__.__name__
-        nodefields = list(ast.iter_fields(node))
-        node_ = list(ast.iter_child_nodes(node))
-        # print('[warn]', nodename, nodefields, node_)
-        # print('[warn]', '<visit_%s not implemented in %s>' \
-        #       % (nodename, visitorname))
-        return self.meta_visit(node)
-
-    # nodes
+class Elispy(Meta):
 
     def visit_Module(self, m):
         b = ' '.join([self.visit(_) for _ in m.body])
