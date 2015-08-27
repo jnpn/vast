@@ -119,13 +119,17 @@ class Meta(ast.NodeVisitor):
         return sep.join([self.visit(sub) for sub in (subs or [])])
 
     def meta_visit(self, node):
-        def _(f):
-            n, e = f
-            se = self.visicat(e, sep=' ') if type(e) is type([]) else self.visit(e)
-            return '%s=%s' % (n, se)
+
+        def dispatch(node):
+            if type(node) is type([]):
+                return self.visicat(node, sep=' ')
+            else:
+                return self.visit(node)
+
+        fmt = '%s=%s'
         fields = ast.iter_fields(node)
-        return '<meta:%s %s>' % (node.__class__.__name__
-                                 , ' '.join(_(__) for __ in fields))
+        vfields = ' '.join(fmt % (name, dispatch(node)) for name, node in fields)
+        return '<meta:%s %s>' % (node.__class__.__name__, vfields)
 
     def generic_visit(self, node):
         # return super().generic_visit(node)
