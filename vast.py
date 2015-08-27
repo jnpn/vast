@@ -50,8 +50,7 @@ def talk(s):
 
 def elispy(s):
     ''' parse s then pass it to the Elispy visitor '''
-    print(s)
-    Elispy().visit(ast.parse(s))
+    return Elispy().visit(ast.parse(s))
 
 def main():
     '''Helper, calls premain(Elispy).'''
