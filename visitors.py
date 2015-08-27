@@ -188,7 +188,7 @@ class Elispy(Meta):
     def visit_FunctionDef(self, f):
         a = self.visit(f.args)
         b = ' '.join([self.visit(_) for _ in f.body])
-        return '(defun %s (%s) %s)' % (f.name, a, b)
+        return '(defun %s (%s) (progn %s))' % (f.name, a, b)
 
     def visit_Lambda(self, l):
         a = self.visit(l.args)
