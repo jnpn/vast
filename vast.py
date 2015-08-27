@@ -58,22 +58,3 @@ def main():
 if __name__ == '__main__':
 
     premain(Elispy)
-    
-
-### Dead Code
-
-# def generic(s):
-#     print(s)
-#     Generic().visit(ast.parse(s))
-
-# def wast(a):
-#     ''' just use ast.walk you RTFMist '''
-#     yield a
-#     for c in ast.iter_child_nodes(a):
-#         yield from wast(c)
-
-# def past(ns):
-#     def p(n):
-#         at = [str(v) for n,v in ast.iter_fields(n) if type(v) is str or type(v) is int]
-#         return '{ %s %s}' % (n.__class__.__name__, ' '.join(at) if at else '')
-#     return ' '.join(p(n) for n in ns)
