@@ -224,7 +224,7 @@ class Elispy(Meta):
     def visit_Call(self, c):
         f = self.visit(c.func)
         a = self.visicat(c.args, sep=' ')
-        return '(%s %s)' % (f, a)
+        return '(%s %s)' % (f, a) if a else '(%s)' % f
     
     def visit_If(self, i):
         t = self.visit(i.test)
