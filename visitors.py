@@ -129,6 +129,9 @@ class Elispy(Meta):
     def visit_Num(self, n):
         return str(n.n)
 
+    def visit_Str(self, s):
+        return '"%s"' % s.s
+
     def visit_BinOp(self, b):
         o = self.visit(b.op)
         l = self.visit(b.left)
