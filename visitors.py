@@ -190,6 +190,11 @@ class Elispy(Meta):
         b = ' '.join([self.visit(_) for _ in f.body])
         return '(defun %s (%s) %s)' % (f.name, a, b)
 
+    def visit_Lambda(self, l):
+        a = self.visit(l.args)
+        b = self.visit(l.body)
+        return '(lambda (%s) %s)' % (a, b)
+
     def visit_arguments(self, a):
         p = ' '.join([_.arg for _ in a.args]) if a.args else ''
         k = ' '.join([_.arg for _ in a.kwarg]) if a.kwarg else ''
