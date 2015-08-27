@@ -18,15 +18,19 @@ def debug(s):
     v = Dummy()
     v.visit(a)
 
+def quotecode(source):
+    return '''```
+%s
+```
+''' % source
+
 def premain(visitor):
     '''Parse test snippets and pass them to visitor.'''
     for name, source in snippets.items():
-        print('##', name.capitalize())
-        print('```')
-        print(source)
-        print('```')
-        v = visitor().visit(ast.parse(source))
-        print(v)
+        fn = name.capitalize()
+        print(quotecode('## %s (Python|source)\n' % fn + source))
+        target = visitor().visit(ast.parse(source))
+        print(quotecode(';; %s (Lisp|target)\n' % fn + '\n' + target + '\n'))
         print()
 
 def emacs_eval(elisp):
