@@ -4,36 +4,41 @@ class Generic(ast.NodeVisitor):
 
     '''
     Traditional AST recursive traversal `a la` Lisp
-    Not a visitor actually.
+    With crude identation. Not a visitor actually.
     '''
 
     def children(self, node):
         return [node.__getattribute__(f) for f in node._fields]
 
-    def visit(self, node, ind=0, ins='-', inc=2, pre='`'):
+    @staticmethod
+    def listp(x):
+        return type(x) is type([])
 
-        def listp(x):
-            return type(_) is type([])
+    @staticmethod
+    def atomp(x):
+        return type(x) is type('') or type(x) is type(0)
 
-        def atomp(x):
-            return type(_) is type('') or type(_) is type(0)
+    @staticmethod
+    def nilp(x):
+        return type(x) is type(None)
 
-        def nilp(x):
-            return type(_) is type(None)
+    def rec_visit(self, node, ind=0, ins='-', inc=2, pre='`'):
 
         print(pre + (ins * ind), node.__class__.__name__)
         for _ in self.children(node):
-            if listp(_):
+            if Generic.listp(_):
                 for __ in _:
-                    self.visit(__, ind = ind + inc)
-            elif atomp(_):
+                    self.rec_visit(__, ind = ind + inc)
+            elif Generic.atomp(_):
                 print(pre + (ins * ind) , '%s:%s' % (_, type(_).__name__))
-            elif nilp(_):
+            elif Generic.nilp(_):
                 print(pre + (ins * ind), '.') #'ℵ')
             else:
                 # print(ins * ind, 'ast.', _.__class__.__name__)
-                self.visit(_, ind = ind + inc)
+                self.rec_visit(_, ind = ind + inc)
 
+    def generic_visit(self, node):
+        return self.rec_visit(node)
 
 class Dummy(ast.NodeVisitor):
 
