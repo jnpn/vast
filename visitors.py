@@ -103,7 +103,7 @@ class Dummy(ast.NodeVisitor):
         for _ in i.orelse:
             self.visit(_)
 
-class Meta(ast.NodeVisitor):
+class Meta(Generic):
 
     '''
     Meta visitor, ugly variant of Generic, but uses the official
@@ -121,6 +121,7 @@ class Meta(ast.NodeVisitor):
               % (nodename, visitorname))
 
     def visicat(self, subs, sep='.'):
+        '''Mapconcat self.visit over [astnodes].'''
         return sep.join([self.visit(sub) for sub in (subs or [])])
 
     def meta_visit(self, node):
@@ -137,29 +138,18 @@ class Meta(ast.NodeVisitor):
         return '<meta:%s %s>' % (node.__class__.__name__, vfields)
 
     def generic_visit(self, node):
-        # return super().generic_visit(node)
-        # print('[warn]', node)
 
-        if type(node) is type([]):
+        if super().atomp(node) or super().nilp(node):
+            return node
+        elif super().listp(node):
             if len(node) == 1:
                 node = node[0]
             elif len(node) == 0:
                 print('[error]', 'node is an empty list')
             else:
                 print('[warn]', 'node is a list of size > 1, elements above 1 are ignored (@TOFIX)')
-        elif type(node) is type(''):
-            return node
-        elif type(node) is type(0):
-            return node
-        elif type(node) is type(None):
-            return 'None'
-
-        return self.meta_visit(node)
-
-    def visit_Module(self, m):
-        b = ' '.join([self.visit(_) for _ in m.body])
-        print(b)
-        return b
+        else:
+            return self.meta_visit(node)
     
 class Elispy(Meta):
 
@@ -170,7 +160,6 @@ class Elispy(Meta):
 
     def visit_Module(self, m):
         b = ' '.join([self.visit(_) for _ in m.body])
-        print(b)
         return b
 
     def visit_For(self, f):
