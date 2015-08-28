@@ -18,7 +18,8 @@ class Source:
     Packs source related methods into a single unit.
     '''
 
-    def __init__(self, fn, source):
+    def __init__(self, source='None', fn='?'):
+        self.source = source
         self.fn = fn
         self.source = source
 
@@ -62,7 +63,7 @@ class Source:
 def premain(visitor):
     '''Parse test snippets and pass them to visitor.'''
     for name, source in snippets.items():
-        qs, qt = Source(name.capitalize(), source).transpile(visitor)
+        qs, qt = Source(source, name.capitalize()).transpile(visitor)
         print(qs)
         print(qt)
         print()
