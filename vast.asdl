@@ -1,3 +1,5 @@
+-- python 3.4 (WARNING python 3.5 asdl will change)
+-- see: https://greentreesnakes.readthedocs.org/en/latest/nodes.html#literals
 module Python version "$Revision$"
 {
 	mod = Module(stmt* body)
