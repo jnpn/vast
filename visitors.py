@@ -92,7 +92,22 @@ class Meta(Generic):
                 print('[warn]', 'node is a list of size > 1, elements above 1 are ignored (@TOFIX)')
         else:
             return self.meta_visit(node)
-    
+
+class Flispy(Meta):
+
+    '''
+    Thin inherited override of Meta using new methods:
+      - syntax
+      - field
+    in order to get closer to Lisp Meta Language
+    '''
+
+    def syntax(self, name, sub):
+        return super().syntax(name, sub, pre='', beg='(', end=')')
+
+    def field(self, name, node):
+        return super().field('', node, fmt='%s%s')
+
 class Elispy(Meta):
 
     '''
