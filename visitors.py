@@ -60,6 +60,12 @@ class Meta(Generic):
         '''Mapconcat self.visit over [astnodes].'''
         return sep.join([self.visit(sub) for sub in (subs or [])])
 
+    def syntax(self, name, sub, beg='<', end='>', pre='meta:'):
+        return '%s%s%s %s%s' % (beg, pre, name, sub, end)
+
+    def field(self, name, node, fmt='%s=%s'):
+        return fmt % (name, node)
+
     def meta_visit(self, node):
 
         def dispatch(node):
@@ -68,10 +74,10 @@ class Meta(Generic):
             else:
                 return self.visit(node)
 
-        fmt = '%s=%s'
         fields = ast.iter_fields(node)
-        vfields = ' '.join(fmt % (name, dispatch(node)) for name, node in fields)
-        return '<meta:%s %s>' % (node.__class__.__name__, vfields)
+        vfields = ' '.join(self.field(name, dispatch(node))
+                           for name, node in fields)
+        return self.syntax(node.__class__.__name__, vfields)
 
     def generic_visit(self, node):
 
