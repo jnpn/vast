@@ -21,7 +21,11 @@ class Source:
     def __init__(self, source='None', fn='?'):
         self.source = source
         self.fn = fn
+
+    def of(self, source):
         self.source = source
+        return self
+
     def __repr__(self):
         return '<Source [%s]>' % self.source
 
