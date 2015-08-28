@@ -26,14 +26,14 @@ class Source:
         return list(ast.walk(ast.parse(self.source)))
 
     def elispy(self):
-        ''' parse s then pass it to the Elispy visitor '''
-        return Elispy().visit(ast.parse(self.source))
+        '''Parse source then pass the ast to the Elispy visitor.'''
+        a = ast.parse(self.source)
+        return Elispy().visit(a)
 
     def debug(self):
-        '''Parse source then pass the ast to the Dummy visitor.'''
+        '''Parse source then pass the ast to the Generic visitor.'''
         a = ast.parse(self.source)
-        v = Generic()
-        v.visit(a)
+        return Generic().visit(a)
 
     def quotecode(self, code):
         return '''```
