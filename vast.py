@@ -22,6 +22,8 @@ class Source:
         self.source = source
         self.fn = fn
         self.source = source
+    def __repr__(self):
+        return '<Source [%s]>' % self.source
 
     def talk(self):
         return list(ast.walk(ast.parse(self.source)))
