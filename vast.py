@@ -20,6 +20,8 @@ class Source:
     '''
 
     def __init__(self, source='None', fn='?'):
+    def __init__(self, source='None', fn='?', visitor=Generic):
+        self.visitor = visitor
         self.source = source
         self.fn = fn
 
