@@ -47,11 +47,11 @@ lambda x: x
 '''
 
 snippets = {
-    'setcomp': ssetcomp
-    , 'factorial': sfact
-    , 'wrap': swrap
-    , 'for': sfor
-    , 'map': smap
-    , 'lambda': slam
-    , 'class': sclass
+    'setcomp': ssetcomp,
+    'factorial': sfact,
+    'wrap': swrap,
+    'for': sfor,
+    'map': smap,
+    'lambda': slam,
+    'class': sclass
 }
