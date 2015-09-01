@@ -23,6 +23,11 @@ class Source:
         self.source = source
         self.fn = fn
 
+    def load(self, fn):
+        with open(fn) as src:
+            self.source = ''.join(src.readlines())
+        return self
+
     def of(self, source):
         self.source = source
         return self
