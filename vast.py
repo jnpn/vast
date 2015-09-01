@@ -88,9 +88,13 @@ class Source:
 def premain(visitor):
     '''Parse test snippets and pass them to visitor.'''
     for name, source in snippets.items():
-        qs, qt = Source(source, name.capitalize()).transpile(visitor)
+        fn = name.capitalize()
+        src = Source(fn).of(source).into(visitor)
+        qs, qt = src.transpile()
+        qv = src.emacs_eval()
         print(qs)
         print(qt)
+        print(qv)
         print()
 
 
