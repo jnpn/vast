@@ -9,6 +9,7 @@ cases not handled yet.
 import ast
 from subprocess import Popen, PIPE
 
+from transformer import Desugar
 from visitors import Generic, Elispy
 from snippets import snippets
 
@@ -106,8 +107,28 @@ def main():
     '''Helper, calls premain(Elispy).'''
     return premain(Elispy)
 
+
+def transform(filename):
+    s = Source().load(filename).into(Elispy)
+    qs, qt = s.transpile()
+    print(qs)
+    print(qt)
+
 # Main
 
 if __name__ == '__main__':
+    print('-- Elispy')
+    print('--  Python to Elisp pretty printer')
 
-    premain(Elispy)
+    s = 'def f(x): return x+1'
+    a = ast.parse(s)
+    b = Desugar().visit(a)
+    t = Elispy().visit(b)
+    print(t)
+
+    c = Source(fn='increment (cps)').of(s).nanopass(Desugar).into(Elispy)
+    qs, qt = c.transpile()
+    print(qs)
+    print(qt)
+    # print(ast.dump(b))
+    # main()
