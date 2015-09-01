@@ -72,10 +72,14 @@ class Source:
                       stdout=PIPE)
         return emacs.stderr.read().decode('utf8')
 
-    def transpile(self, visitor):
+    def transpile(self):
         qs = self.quotecode('## %s (Python|source)\n' % self.fn + self.source)
-        tgt = visitor().visit(ast.parse(self.source))
-        qt = self.quotecode(';; %s (Lisp|target)\n' % self.fn + '\n' + tgt + '\n')
+        ast0 = ast.parse(self.source)
+        print('[transpile][pre]', ast.dump(ast0))
+        ast1 = ast0 if not self.transformer else self.transformer().visit(ast0)
+        print('[transpile][post]', ast.dump(ast1))
+        tgt = self.visitor().visit(ast1)
+        qt = self.quotecode(';; %s (Lisp|target)\n' % self.fn + '\n%s\n' % tgt)
         return qs, qt
 
 
