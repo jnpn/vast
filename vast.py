@@ -19,8 +19,8 @@ class Source:
     Packs source related methods into a single unit.
     '''
 
-    def __init__(self, source='None', fn='?'):
     def __init__(self, source='None', fn='?', visitor=Generic):
+        self.transformer = None
         self.visitor = visitor
         self.source = source
         self.fn = fn
@@ -32,6 +32,10 @@ class Source:
 
     def of(self, source):
         self.source = source
+        return self
+
+    def nanopass(self, transformer):
+        self.transformer = transformer
         return self
 
     def into(self, visitor):
