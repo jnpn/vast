@@ -12,6 +12,7 @@ from subprocess import Popen, PIPE
 from visitors import Generic, Meta, Elispy
 from snippets import snippets
 
+
 class Source:
 
     '''
@@ -43,21 +44,23 @@ class Source:
         return Generic().visit(a)
 
     def quotecode(self, code):
-        return '''```
-%s
-```
-''' % code
+        return '```\n%s\n```' % code
 
-    def emacs_eval(source):
-        '''Submit pretty printed src (from the visitor) to `emacs` for evaluation.'''
+    def emacs_eval(self):
+        '''
+        Submit pretty printed src (from the visitor)
+        to `emacs` for evaluation.
+        '''
 
-        assert Popen(['which', 'emacs'], stdout=PIPE, stderr=PIPE).stderr is not b''
+        assert Popen(['which', 'emacs'], stdout=PIPE, stderr=PIPE).stderr \
+            is not b''
 
         wrapper = '(message "%%S" (progn %s))'
         # http://www.emacswiki.org/emacs/BatchMode
-        emacs = Popen(['emacs','-batch','--eval', wrapper % self.source]
-                      , stderr=PIPE
-                      , stdout=PIPE)
+        code = self.visitor().visit(ast.parse(self.source))
+        emacs = Popen(['emacs', '-batch', '--eval', wrapper % code],
+                      stderr=PIPE,
+                      stdout=PIPE)
         return emacs.stderr.read().decode('utf8')
 
     def transpile(self, visitor):
@@ -66,6 +69,7 @@ class Source:
         qt = self.quotecode(';; %s (Lisp|target)\n' % self.fn + '\n' + tgt + '\n')
         return qs, qt
 
+
 def premain(visitor):
     '''Parse test snippets and pass them to visitor.'''
     for name, source in snippets.items():
@@ -73,6 +77,7 @@ def premain(visitor):
         print(qs)
         print(qt)
         print()
+
 
 def main():
     '''Helper, calls premain(Elispy).'''
