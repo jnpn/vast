@@ -1,0 +1,10 @@
+
+* TODO NodeTransformer to desugar python idioms into FP
+  Guarantees presence of a strict subset of ast nodes.
+  No more ListComp, SetComp, Aug..., ...
+
+* TODO Then Simple isomorphic NodeVisitor for FP-ish tree to Lisp
+
+* TODO Add prelude generation
+  bootstrap generic python operation add, not, is, in, ...
+  prepend to emacs lisp generation.
