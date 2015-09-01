@@ -32,6 +32,10 @@ class Source:
         self.source = source
         return self
 
+    def into(self, visitor):
+        self.visitor = visitor
+        return self
+
     def __repr__(self):
         return '<Source [%s]>' % self.source
 
