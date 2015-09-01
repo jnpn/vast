@@ -9,7 +9,7 @@ cases not handled yet.
 import ast
 from subprocess import Popen, PIPE
 
-from visitors import Generic, Meta, Elispy
+from visitors import Generic, Elispy
 from snippets import snippets
 
 
