@@ -117,8 +117,9 @@ class Elispy(Meta):
     '''
 
     def visit_Module(self, m):
+        p = ElispyPrelude().emit()
         b = ' '.join([self.visit(_) for _ in m.body])
-        return b
+        return p + b
 
     def visit_For(self, f):
         t = self.visit(target)
@@ -296,3 +297,25 @@ class Elispy(Meta):
 
     def visit_Tuple(self, t):
         return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
+
+class ElispyPrelude:
+
+    def emit(self):
+        prelude = '''
+;;; Elispy Prelude
+;;;
+(defun generic-add (a b)
+  "Generic add of A B."
+  (cond ((and (numberp a) (numberp b)) (+ a b))
+        ((and (floatp a) (floatp b)) (+ a b))
+        ((and (stringp a) (stringp b)) (string-join a b))
+        (t (error (list a b :type-mismatch)))))
+
+(defun tuple (&rest vs)
+  "~Fake multiple return values."
+  (apply #'values vs))
+
+;;; Compiled Code
+
+'''
+        return prelude
