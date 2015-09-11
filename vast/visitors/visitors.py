@@ -293,7 +293,7 @@ class Elispy(Meta):
             body ~ inst | FunctionDef
         <el>Defclass(name. [parent], )
         '''
-        pass
+        return '(defclass %s (%s) %s)' % (cd.name, ' '.join(cd.bases), self.visicat(cd.body))
 
     def visit_Tuple(self, t):
         return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
