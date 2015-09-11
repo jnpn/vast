@@ -9,8 +9,8 @@ cases not handled yet.
 import ast
 from subprocess import Popen, PIPE
 
-from transformer import Desugar
-from visitors import Generic, Elispy
+from vast.transformers.transformer import Desugar
+from vast.visitors.visitors import Generic, Elispy
 from snippets import snippets
 
 
