@@ -89,7 +89,8 @@ class Meta(Generic):
             elif len(node) == 0:
                 print('[error]', 'node is an empty list')
             else:
-                print('[warn]', 'node is a list of size > 1, elements above 1 are ignored (@TOFIX)')
+                print('[warn]', 'node is a list of size > 1, '
+                      'elements above 1 are ignored (@TOFIX)')
         else:
             return self.meta_visit(node)
 
@@ -165,10 +166,14 @@ class Elispy(Meta):
 
         return '(%s %s %s)' % (o, l, r)
     
-    # def visit_BoolOp(self, b):
-    #     return self.meta_visit(b)
+    def visit_BoolOp(self, b):
+        vals = ' '.join([self.visit(v) for v in b.values])
+        return '(%s %s)' % (self.visit(b.op), vals)
         
     # cmpop list : Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
+    # Boolean operators are simple names, the relationship is made by BoolOp
+    def visit_Or(self, o):
+        return 'or'
 
     def visit_Lt(self, l):
         return '<'
@@ -187,7 +192,7 @@ class Elispy(Meta):
     # operator list : operator = Add | Sub | Mult | Div | Mod | Pow | LShift | RShift | BitOr | BitXor | BitAnd | FloorDiv
 
     def visit_Add(self, a):
-        return '(+)'
+        return 'generic-add'
 
     # TODO : missing operators
 
@@ -216,8 +221,8 @@ class Elispy(Meta):
 
     def visit_FunctionDef(self, f):
         a = self.visit(f.args)
-        b = ' '.join([self.visit(_) for _ in f.body])
-        return '(defun %s (%s) (progn %s))' % (f.name, a, b)
+        b = '\n    '.join([self.visit(_) for _ in f.body])
+        return '(defun %s (%s)\n  (progn\n    %s))' % (f.name, a, b)
 
     def visit_Lambda(self, l):
         a = self.visit(l.args)
@@ -232,7 +237,15 @@ class Elispy(Meta):
     def visit_arguments(self, a):
         p = ' '.join([_.arg for _ in a.args]) if a.args else ''
         k = ' '.join([_.arg for _ in a.kwarg]) if a.kwarg else ''
-        d = ' '.join([_.arg for _ in a.defaults]) if a.defaults else ''
+
+        #     args =     (a,b,c,d,...)
+        #     defaults =     (v,w,...)
+        # ->  pos,opt = (a,b)(c,d,...)
+        pos = a.args[:-len(a.defaults)]
+        opt = a.args[-len(a.defaults):]
+        #d = '&optional' + ' '.join([self.visit(_) for _ in a.defaults]) if a.defaults else ''
+        p = ' '.join([_.arg for _ in pos]) if pos else ''
+        d = ('&optional ' + ' '.join([_.arg for _ in opt])) if opt else ''
         return ('%s %s %s' % (p, k, d)).strip()
 
     def visit_Compare(self, c):
@@ -273,65 +286,13 @@ class Elispy(Meta):
         val = self.visit(a.value)
         return '(setq %s %s)' % (tgs, val)
 
-class Dummy(ast.NodeVisitor):
+    def visit_ClassDef(self, cd):
+        '''
+        <py>Class(name, [parent], body)
+            body ~ inst | FunctionDef
+        <el>Defclass(name. [parent], )
+        '''
+        pass
 
-    '''Old useless visitor as grammar learning code.'''
-
-    def visit_Sub(self, s):
-        print('SUB')
-
-    def visit_Mult(self, m):
-        print('MULT')
-
-    def visit_Num(self, n):
-        print(n.n)
-
-    def visit_BinOp(self, b):
-        print('{')
-        self.visit(b.left)
-        self.visit(b.op)
-        self.visit(b.right)
-        print('}')
-
-    def visit_Lt(self, l):
-        print('<')
-
-    def visit_Gt(self, g):
-        print('>')
-
-    def visit_FunctionDef(self, f):
-        print('LET %s = ' % f.name)
-        self.visit(f.args)
-        for _ in f.body:
-            self.visit(_)
-
-    def visit_Compare(self, c):
-        print('(')
-        self.visit(c.left)
-        for _ in c.ops:
-            self.visit(_)
-        for _ in c.comparators:
-            self.visit(_)
-        print(')')
-
-    def visit_Return(self, r):
-        print('RET')
-        self.visit(r.value)
-
-    def visit_Name(self, n):
-        print('$%s' % n.id)
-
-    def visit_Call(self, c):
-        print('CALL')
-        self.visit(c.func)
-        for _ in c.args:
-            self.visit(_)
-
-    def visit_If(self, i):
-        print('IF')
-        self.visit(i.test)
-        for _ in i.body:
-            self.visit(_)
-        print('ORELSE')
-        for _ in i.orelse:
-            self.visit(_)
+    def visit_Tuple(self, t):
+        return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
