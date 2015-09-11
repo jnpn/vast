@@ -76,7 +76,7 @@ class Defaulted(Desugar):
 
         def assign_or_default(arg, val):
             return ast.Assign([ast.Name(arg.arg, ast.Load())], 
-                              ast.BoolOp(ast.Or(), [val, arg.arg]))
+                              ast.BoolOp(ast.Or(), [arg.arg, val]))
 
         args = fd.args.args
         defaults = fd.args.defaults
