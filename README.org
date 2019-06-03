@@ -3,82 +3,88 @@
 
 * vast -- python to elisp transpiler
 
-** status: very alpha
+** status very alpha
 
-** usage:
+** usage
    - git clone https://github.com/jnpn/vast.git
    - cd vast
    - python main.py
    - >>> def f(x): return x + 1 RET
    - ;; elisp output
 
-* TODO implement list, set, map python API
+* todos
+** TODO implement list, set, map python API
 
-  - rely on dash.el as a starting point ?
+   - rely on dash.el as a starting point ?
 
-** list (slice, append, update, pop, ...)
-   (defun list-slice (l &optional beg end ...step?)
-     (-drop beg (-take end l)))
+*** list (slice, append, update, pop, ...)
+    ```
+    (defun list-slice (l &optional beg end ...step?)
+      (-drop beg (-take end l)))
 
-   slice   =lisp.  drop beg (take end)
-   append  =lisp.  append
-   update  =lisp.  nth . rplaca
-   pop	   =lisp. cdr
-   push	   =lisp. cons
+    slice   =lisp.  drop beg (take end)
+    append  =lisp.  append
+    update  =lisp.  nth . rplaca
+    pop	   =lisp. cdr
+    push	   =lisp. cons
+    ```
 
-** set (intersect, union, diff, conjugate-diff)
+*** set (intersect, union, diff, conjugate-diff)
 
-** map (put, get, get-default)
+*** map (put, get, get-default)
 
-* TODO NodeTransformer to desugar python idioms into FP
-  Guarantees presence of a strict subset of ast nodes.
-  No more ListComp, SetComp, Aug..., ...
+** TODO NodeTransformer to desugar python idioms into FP
+   
+   - Guarantees presence of a strict subset of ast nodes.
+   - No more ListComp, SetComp, Aug..., ...
 
-** ListComp -> Lisp
-   [fun gen...]
+*** ListComp -> Lisp
+    ```
+    [fun gen...]
 
-   gen* [fst (name iter pred) ...] ->
-   (map (lambda (<lisp name>)
-	   <gen* ...>
-	)
-    (filter <lisp pred> <lisp iter>))
+    gen* [fst (name iter pred) ...] ->
+    (map (lambda (<lisp name>)
+	    <gen* ...>
+	 )
+     (filter <lisp pred> <lisp iter>))
 
-    gen* [] -> <lisp fun>
+     gen* [] -> <lisp fun>
+     ```
+     
+** TODO Then Simple isomorphic NodeVisitor for FP-ish tree to Lisp
 
-* TODO Then Simple isomorphic NodeVisitor for FP-ish tree to Lisp
+** TODO Add prelude generation
+   - bootstrap generic python operation add, not, is, in, ...
+   - prepend to emacs lisp generation.
 
-* TODO Add prelude generation
-  bootstrap generic python operation add, not, is, in, ...
-  prepend to emacs lisp generation.
+*** TODO Cover all overloadable binary operators (see grammar):
+    add, iadd, sub... as generic-<op>
 
-** TODO Cover all overloadable binary operators (see grammar):
-   add, iadd, sub... as generic-<op>
+    #+BEGIN_SRC emacs-lisp
+      (defun generic-add(a b)
+	(cond  ((and (numberp a) (numberp b)) (+ a b))
+	       ((and (stringp a) (stringp b)) (string-join a b))
+	       ((and (floatp a) (floatp b)) (+ a b))
+	       ((and (characterp a) (characterp b)) (string-join a b))
+	       ((and (consp a) (consp b)) (append a b))
+	       (t (error "non supported combination" a b))))
 
-   #+BEGIN_SRC emacs-lisp
-     (defun generic-add(a b)
-       (cond  ((and (numberp a) (numberp b)) (+ a b))
-	      ((and (stringp a) (stringp b)) (string-join a b))
-	      ((and (floatp a) (floatp b)) (+ a b))
-	      ((and (characterp a) (characterp b)) (string-join a b))
-	      ((and (consp a) (consp b)) (append a b))
-	      (t (error "non supported combination" a b))))
+      ;;; or transpile a table of monomorphic relations
+      '((numberp . +)
+	(floatp . +)
+	(stringp . string-join)
+	(characterp . (lambda (&rest chars)
+			(string-join
+			 (mapcar #'char-to-string chars))))
+	(consp . append))
+    #+END_SRC
 
-     ;;; or transpile a table of monomorphic relations
-     '((numberp . +)
-       (floatp . +)
-       (stringp . string-join)
-       (characterp . (lambda (&rest chars)
-		       (string-join
-			(mapcar #'char-to-string chars))))
-       (consp . append))
-   #+END_SRC
+    #+BEGIN_SRC python
+    def f(a, b):
+	return a + b
+    #+END_SRC
 
-   #+BEGIN_SRC python
-   def f(a, b):
-       return a + b
-   #+END_SRC
-
-   #+BEGIN_SRC emacs-lisp
-   (defun f(a b)
-     (generic-add a b))
-   #+END_SRC
+    #+BEGIN_SRC emacs-lisp
+    (defun f(a b)
+      (generic-add a b))
+    #+END_SRC
