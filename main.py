@@ -17,21 +17,18 @@ def premain(visitor):
         print(qv)
         print()
 
+def repl():
+    while True:
+        print(end='>>> ')
+        exp = input()
+        if exp == 'q' or exp == 'Q' or exp == 'quit' or exp == 'Quit' or exp == 'QUIT':
+            break
+        else:
+            (py,el) = Source().of(exp).into(Elispy).transpile()
+            print('; =>', el)
+    print('bye.')
 
-def main():
-    '''Helper, calls premain(Elispy).'''
-    return premain(Elispy)
-
-
-def transform(filename):
-    s = Source().load(filename).into(Elispy)
-    qs, qt = s.transpile()
-    print(qs)
-    print(qt)
-
-# Main
-
-if __name__ == '__main__':
+def oldmain():
     print('-- Elispy')
     print('--  Python to Elisp pretty printer')
 
@@ -47,3 +44,20 @@ if __name__ == '__main__':
     print(qt)
     # print(ast.dump(b))
     # main()
+
+
+def main():
+    '''Helper, calls premain(Elispy).'''
+    return premain(Elispy)
+
+
+def transform(filename):
+    s = Source().load(filename).into(Elispy)
+    qs, qt = s.transpile()
+    print(qs)
+    print(qt)
+
+# Main
+
+if __name__ == '__main__':
+    repl()
