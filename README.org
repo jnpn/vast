@@ -1,4 +1,17 @@
 #+AUTHOR: Johan PONIN
+
+
+* vast -- python to elisp transpiler
+
+** status: very alpha
+
+** usage:
+   - git clone https://github.com/jnpn/vast.git
+   - cd vast
+   - python main.py
+   - >>> def f(x): return x + 1 RET
+   - ;; elisp output
+
 * TODO implement list, set, map python API
 
   - rely on dash.el as a starting point ?
