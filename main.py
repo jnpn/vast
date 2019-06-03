@@ -1,3 +1,11 @@
+'''
+Mostly a Python to (Emacs)Lisp pretty printer.
+
+Many AST visitors have been implemented. The useful one
+being Elispy, which has a fallback to generic_visit for
+cases not handled yet.
+'''
+
 import ast
 
 from vast.vast import Source
