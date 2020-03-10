@@ -121,6 +121,12 @@ class Elispy(Meta):
         b = ' '.join([self.visit(_) for _ in m.body])
         return p + b
 
+    def visit_Import(self, i):
+        req = lambda n: '(require \'%s :as \'%s)' % (n.name, n.asname) \
+            if n.asname \
+            else '(require \'%s)' % n.name
+        return '\n'.join(req(n) for n in  i.names)
+
     def visit_For(self, f):
         t = self.visit(f.target)
         i = self.visit(f.iter)
