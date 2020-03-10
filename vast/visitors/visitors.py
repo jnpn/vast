@@ -328,6 +328,18 @@ class ElispyPrelude:
         ((and (stringp a) (stringp b)) (string-join a b))
         (t (error (list a b :type-mismatch)))))
 
+(setq None nil)
+
+(defun print (&rest args)
+  (loop for a in args
+       do (message "%s" a)))
+
+(defun map (f l) (mapcar f l))
+
+(defun each (f l)
+  (loop for e in l
+	do (funcall f e)))
+
 (defun tuple (&rest vs)
   "~Fake multiple return values."
   (apply #'values vs))
