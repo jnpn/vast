@@ -303,6 +303,12 @@ class Elispy(Meta):
     def visit_Tuple(self, t):
         return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
 
+    def visit_Dict(self, d):
+        ks = ' '.join(self.visit(k) for k in d.keys)
+        vs = ' '.join(self.visit(v) for v in d.values)
+        return '(dict %s %s)' % (ks, vs)
+
+
 class ElispyPrelude:
 
     def emit(self):
