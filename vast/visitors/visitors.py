@@ -122,10 +122,10 @@ class Elispy(Meta):
         return p + b
 
     def visit_For(self, f):
-        t = self.visit(target)
-        i = self.visit(i)
-        bs = self.visitcat(bs)
-        os = self.visit(os)
+        t = self.visit(f.target)
+        i = self.visit(f.iter)
+        bs = self.visicat(f.body)
+        os = self.visit(f.orelse)
         return '(each (lambda (%s) %s %s) %s)' % (t, bs, os, i)
 
     # def visit_ListComp(self, l):
