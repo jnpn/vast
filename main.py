@@ -13,6 +13,8 @@ from vast.visitors.visitors import Elispy
 from vast.transformers.transformer import Desugar
 from snippets import snippets
 
+import click
+
 def premain(visitor):
     '''Parse test snippets and pass them to visitor.'''
     for name, source in snippets.items():
@@ -25,6 +27,11 @@ def premain(visitor):
         print(qv)
         print()
 
+@click.group()
+def cli():
+    pass
+
+@cli.command()
 def repl():
     while True:
         print(end='>>> ')
@@ -53,13 +60,12 @@ def oldmain():
     # print(ast.dump(b))
     # main()
 
-
 def main():
     '''Helper, calls premain(Elispy).'''
     return premain(Elispy)
 
-
-def transform(filename):
+@cli.command()
+def compile(filename):
     s = Source().load(filename).into(Elispy)
     qs, qt = s.transpile()
     print(qs)
@@ -68,4 +74,4 @@ def transform(filename):
 # Main
 
 if __name__ == '__main__':
-    repl()
+    cli()
