@@ -276,10 +276,15 @@ class Elispy(Meta):
     
     def visit_If(self, i):
         t = self.visit(i.test)
-        # b = ' '.join([self.visit(_) for _ in i.body])
-        # o = ' '.join([self.visit(_) for _ in i.orelse])
         b = self.visicat(i.body)
         o = self.visicat(i.orelse)
+        return '(if %s %s %s)' % (t, b, o)
+
+    def visit_IfExp(self, i):
+        import pdb; pdb.set_trace()
+        t = self.visit(i.test)
+        b = self.visit(i.body)
+        o = self.visit(i.orelse)
         return '(if %s %s %s)' % (t, b, o)
 
     def visit_Assign(self, a):
