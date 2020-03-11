@@ -116,16 +116,67 @@ class Elispy(Meta):
     from Meta.
     '''
 
+# module Python version "$Revision$"
+# {
+
+# 	mod = Module(stmt* body)
+
     def visit_Module(self, m):
         p = ElispyPrelude().emit()
         b = ' '.join([self.visit(_) for _ in m.body])
         return p + b
 
-    def visit_Import(self, i):
-        req = lambda n: '(require \'%s :as \'%s)' % (n.name, n.asname) \
-            if n.asname \
-            else '(require \'%s)' % n.name
-        return '\n'.join(req(n) for n in  i.names)
+# 	    | Interactive(stmt* body)
+# 	    | Expression(expr body)
+
+# 	    -- not really an actual node but useful in Jython's typesystem.
+# 	    | Suite(stmt* body)
+
+# 	stmt = FunctionDef(identifier name, arguments args,
+#                             stmt* body, expr* decorator_list)
+
+    def visit_FunctionDef(self, f):
+        a = self.visit(f.args)
+        if len(f.body) <= 1:
+            b = '\n    '.join([self.visit(_) for _ in f.body])
+            return '(defun %s (%s)\n  %s)' % (f.name, a, b)
+        else:
+            b = '\n    '.join([self.visit(_) for _ in f.body])
+            return '(defun %s (%s)\n  (progn\n    %s))' % (f.name, a, b)
+
+# 	      | ClassDef(identifier name, expr* bases, stmt* body, expr* decorator_list)
+
+    def visit_ClassDef(self, cd):
+        '''
+        <py>Class(name, [parent], body)
+            body ~ inst | FunctionDef
+        <el>Defclass(name. [parent], )
+        '''
+        return '(defclass %s (%s) %s)' % (cd.name, ' '.join(b.id for b in cd.bases), self.visicat(cd.body))
+
+# 	      | Return(expr? value)
+
+    def visit_Return(self, r):
+        r = self.visit(r.value)
+        return r
+
+
+# 	      | Delete(expr* targets)
+# 	      | Assign(expr* targets, expr value)
+
+    def visit_Assign(self, a):
+        tgs = self.visicat(a.targets)
+        val = self.visit(a.value)
+        return '(setq %s %s)' % (tgs, val)
+
+# 	      | AugAssign(expr target, operator op, expr value)
+
+# 	      -- not sure if bool is allowed, can always use int
+#  	      | Print(expr? dest, expr* values, bool nl)
+
+# 	      -- use 'orelse' because else is a keyword in target languages
+# 	      | For(expr target, expr iter, stmt* body, stmt* orelse)
+
 
     def visit_For(self, f):
         t = self.visit(f.target)
@@ -134,53 +185,203 @@ class Elispy(Meta):
         os = self.visit(f.orelse)
         return '(each (lambda (%s) %s %s) %s)' % (t, bs, os, i)
 
-    # def visit_ListComp(self, l):
-    #     for gen in l.generators:
-    #         '''(map (lambda (<gen.bs>) @rec)
-    #              (filter (lambda (gen.bs) gen.filter)
-    #                  gen.iter))'''
+# 	      | While(expr test, stmt* body, stmt* orelse)
+# 	      | If(expr test, stmt* body, stmt* orelse)
 
-    #     print(list((n, self.visit(e)) for n, e in ast.iter_fields(l)))
-    #     return '(@TOFIX filter (...) (map (...) ...))'
-    #     return ' '.join([self.visit(node) for name, node in ast.iter_fields(l)])
+    def visit_If(self, i):
+        t = self.visit(i.test)
+        b = self.visicat(i.body)
+        o = self.visicat(i.orelse)
+        return '(if %s %s %s)' % (t, b, o)
 
-    def visit_Comprehension(self, c):
-        t = self.visit(c.target)
-        i = self.visit(c.iter)
-        ifs = self.visicat(c.ifs)
-        return '(map (lambda (%s) %s) %s)' % (t, i, ifs)
+# 	      | With(expr context_expr, expr? optional_vars, stmt* body)
 
-    def visit_List(self, l):
-        e = self.visicat(l.elts, sep=' ')
-        return '(list %s)' % e
+# 	      -- 'type' is a bad name
+# 	      | Raise(expr? type, expr? inst, expr? tback)
+# 	      | TryExcept(stmt* body, excepthandler* handlers, stmt* orelse)
+# 	      | TryFinally(stmt* body, stmt* finalbody)
+# 	      | Assert(expr test, expr? msg)
 
-    def visit_Sub(self, s):
-        return '-'
+# 	      | Import(alias* names)
 
-    def visit_Mult(self, m):
-        return '*'
+    def visit_Import(self, i):
+        req = lambda n: '(require \'%s :as \'%s)' % (n.name, n.asname) \
+            if n.asname \
+            else '(require \'%s)' % n.name
+        return '\n'.join(req(n) for n in  i.names)
 
-    def visit_Num(self, n):
-        return str(n.n)
+# 	      | ImportFrom(identifier? module, alias* names, int? level)
 
-    def visit_Str(self, s):
-        return '"%s"' % s.s
+# 	      -- Doesn't capture requirement that locals must be
+# 	      -- defined if globals is
+# 	      -- still supports use as a function!
+# 	      | Exec(expr body, expr? globals, expr? locals)
+
+# 	      | Global(identifier* names)
+# 	      | Expr(expr value)
+# 	      | Pass | Break | Continue
+
+    def visit_Pass(self, p):
+        return '(progn)'
+
+# 	      -- XXX Jython will be different
+# 	      -- col_offset is the byte offset in the utf8 string the parser uses
+# 	      attributes (int lineno, int col_offset)
+
+# 	      -- BoolOp() can use left & right?
+# 	expr = BoolOp(boolop op, expr* values)
+
+    def visit_Expr(self, e):
+        v = self.visit(e.value)
+        return v
+
+    def visit_BoolOp(self, b):
+        vals = ' '.join([self.visit(v) for v in b.values])
+        return '(%s %s)' % (self.visit(b.op), vals)
+
+# 	     | BinOp(expr left, operator op, expr right)
 
     def visit_BinOp(self, b):
         o = self.visit(b.op)
         l = self.visit(b.left)
         r = self.visit(b.right)
-
         return '(%s %s %s)' % (o, l, r)
-    
-    def visit_BoolOp(self, b):
-        vals = ' '.join([self.visit(v) for v in b.values])
-        return '(%s %s)' % (self.visit(b.op), vals)
-        
-    # cmpop list : Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
-    # Boolean operators are simple names, the relationship is made by BoolOp
+
+# 	     | UnaryOp(unaryop op, expr operand)
+# 	     | Lambda(arguments args, expr body)
+
+    def visit_Lambda(self, l):
+        a = self.visit(l.args)
+        b = self.visit(l.body)
+        return '(lambda (%s) %s)' % (a, b)
+
+# 	     | IfExp(expr test, expr body, expr orelse)
+
+    def visit_IfExp(self, i):
+        import pdb; pdb.set_trace()
+        t = self.visit(i.test)
+        b = self.visit(i.body)
+        o = self.visit(i.orelse)
+        return '(if %s %s %s)' % (t, b, o)
+
+# 	     | Dict(expr* keys, expr* values)
+
+    def visit_Dict(self, d):
+        ks = ' '.join(self.visit(k) for k in d.keys)
+        vs = ' '.join(self.visit(v) for v in d.values)
+        return '(dict %s %s)' % (ks, vs)
+
+# 	     | Set(expr* elts)
+
+    def visit_Set(self, s):
+        print(s._fields)
+        return '(Set %s)' % ' '.join(self.visit(e) for e in s.elts)
+
+# 	     | ListComp(expr elt, comprehension* generators)
+# 	     | SetComp(expr elt, comprehension* generators)
+# 	     | DictComp(expr key, expr value, comprehension* generators)
+# 	     | GeneratorExp(expr elt, comprehension* generators)
+# 	     -- the grammar constrains where yield expressions can occur
+# 	     | Yield(expr? value)
+# 	     -- need sequences for compare to distinguish between
+# 	     -- x < 4 < 3 and (x < 4) < 3
+# 	     | Compare(expr left, cmpop* ops, expr* comparators)
+
+    def visit_Compare(self, c):
+        l = self.visit(c.left)
+        o = ' '.join([self.visit(_) for _ in c.ops]) if c.ops else ''
+        c = ' '.join([self.visit(_) for _ in c.comparators]) if c.comparators else ''
+        return '(%s %s %s)' % (o, l, c)
+
+# 	     | Call(expr func, expr* args, keyword* keywords,
+# 			 expr? starargs, expr? kwargs)
+
+    def visit_Call(self, c):
+        f = self.visit(c.func)
+        a = self.visicat(c.args, sep=' ')
+        return '(%s %s)' % (f, a) if a else '(%s)' % f
+
+# 	     | Repr(expr value)
+# 	     | Num(object n) -- a number as a PyObject.
+
+    def visit_Num(self, n):
+        return str(n.n)
+
+# 	     | Str(string s) -- need to specify raw, unicode, etc?
+# 	     -- other literals? bools?
+
+    def visit_Str(self, s):
+        return '"%s"' % s.s
+
+# 	     -- the following expression can appear in assignment context
+# 	     | Attribute(expr value, identifier attr, expr_context ctx)
+
+    def visit_Attribute(self, a):
+        v = self.visit(a.value)
+        at = self.visit(a.attr)
+        # return '(lambda (_) (. %s %s _))' % (v, at)
+        return '(. %s %s)' % (v, at)
+
+# 	     | Subscript(expr value, slice slice, expr_context ctx)
+
+    def visit_Subscript(self, s):
+        v = self.visit(s.value)
+        s = self.visit(s.slice)
+        # c = self.visit(s.ctx)
+        return '(sub %s %s)' % (v, s)
+
+# 	     | Name(identifier id, expr_context ctx)
+
+    def visit_Name(self, n):
+        return str(n.id)
+
+    def visit_NameConstant(self, nc):
+        return str(nc.value)
+
+# 	     | List(expr* elts, expr_context ctx) 
+# 	     | Tuple(expr* elts, expr_context ctx)
+
+    def visit_List(self, l):
+        e = self.visicat(l.elts, sep=' ')
+        return '(list %s)' % e
+
+    def visit_Tuple(self, t):
+        return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
+
+# 	      -- col_offset is the byte offset in the utf8 string the parser uses
+# 	      attributes (int lineno, int col_offset)
+
+# 	expr_context = Load | Store | Del | AugLoad | AugStore | Param
+
+# 	slice = Ellipsis | Slice(expr? lower, expr? upper, expr? step) 
+
+    def visit_Slice(self, s):
+        l = self.visit(s.lower) if s.lower else ''
+        u = self.visit(s.upper) if s.upper else ''
+        s = self.visit(s.step) if s.step else ''
+        # rewrite as if-concat
+        return ' '.join([_ for _ in [l, u, s] if _ is not ''])
+
+# 	      | ExtSlice(slice* dims) 
+# 	      | Index(expr value) 
+
+    def visit_Index(self, i):
+        n = self.visit(i.value)
+        return n
+
+# 	boolop = And | Or 
+
+    def visit_And(self, a):
+        return 'and'
+
     def visit_Or(self, o):
         return 'or'
+
+    # cmpop list : Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
+    # Boolean operators are simple names, the relationship is made by BoolOp
+
+    def visit_Is(self, a):
+        return 'eq'
 
     def visit_Lt(self, l):
         return '<'
@@ -201,45 +402,43 @@ class Elispy(Meta):
     def visit_Add(self, a):
         return 'generic-add'
 
-    # TODO : missing operators
+    def visit_Sub(self, s):
+        return '-'
 
-    def visit_And(self, a):
-        return 'and'
+    def visit_Mult(self, m):
+        return '*'
 
-    def visit_Is(self, a):
-        return 'eq'
+# 	operator = Add | Sub | Mult | Div | Mod | Pow | LShift 
+#                  | RShift | BitOr | BitXor | BitAnd | FloorDiv
 
-    def visit_Subscript(self, s):
-        v = self.visit(s.value)
-        s = self.visit(s.slice)
-        # c = self.visit(s.ctx)
-        return '(sub %s %s)' % (v, s)
+# 	unaryop = Invert | Not | UAdd | USub
 
-    def visit_Index(self, i):
-        n = self.visit(i.value)
-        return n
+# 	cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
 
-    def visit_Slice(self, s):
-        l = self.visit(s.lower) if s.lower else ''
-        u = self.visit(s.upper) if s.upper else ''
-        s = self.visit(s.step) if s.step else ''
-        # rewrite as if-concat
-        return ' '.join([_ for _ in [l, u, s] if _ is not ''])
+# 	comprehension = (expr target, expr iter, expr* ifs)
 
-    def visit_FunctionDef(self, f):
-        a = self.visit(f.args)
-        b = '\n    '.join([self.visit(_) for _ in f.body])
-        return '(defun %s (%s)\n  (progn\n    %s))' % (f.name, a, b)
+    # def visit_ListComp(self, l):
+    #     for gen in l.generators:
+    #         '''(map (lambda (<gen.bs>) @rec)
+    #              (filter (lambda (gen.bs) gen.filter)
+    #                  gen.iter))'''
 
-    def visit_Lambda(self, l):
-        a = self.visit(l.args)
-        b = self.visit(l.body)
-        return '(lambda (%s) %s)' % (a, b)
+    #     print(list((n, self.visit(e)) for n, e in ast.iter_fields(l)))
+    #     return '(@TOFIX filter (...) (map (...) ...))'
+    #     return ' '.join([self.visit(node) for name, node in ast.iter_fields(l)])
 
-    def visit_Attribute(self, a):
-        v = self.visit(a.value)
-        at = self.visit(a.attr)
-        return '(lambda (_) (. %s %s _))' % (v, at)
+    def visit_Comprehension(self, c):
+        t = self.visit(c.target)
+        i = self.visit(c.iter)
+        ifs = self.visicat(c.ifs)
+        return '(map (lambda (%s) %s) %s)' % (t, i, ifs)
+
+# 	-- not sure what to call the first argument for raise and except
+# 	excepthandler = ExceptHandler(expr? type, expr? name, stmt* body)
+# 	                attributes (int lineno, int col_offset)
+
+# 	arguments = (expr* args, identifier? vararg, 
+# 		     identifier? kwarg, expr* defaults)
 
     def visit_arguments(self, a):
         p = ' '.join([_.arg for _ in a.args]) if a.args else ''
@@ -255,65 +454,13 @@ class Elispy(Meta):
         d = ('&optional ' + ' '.join([_.arg for _ in opt])) if opt else ''
         return ('%s %s %s' % (p, k, d)).strip()
 
-    def visit_Compare(self, c):
-        l = self.visit(c.left)
-        o = ' '.join([self.visit(_) for _ in c.ops]) if c.ops else ''
-        c = ' '.join([self.visit(_) for _ in c.comparators]) if c.comparators else ''
-        return '(%s %s %s)' % (o, l, c)
+#         -- keyword arguments supplied to call
+#         keyword = (identifier arg, expr value)
 
-    def visit_Return(self, r):
-        r = self.visit(r.value)
-        return r
-
-    def visit_Expr(self, e):
-        v = self.visit(e.value)
-        return v
-
-    def visit_Name(self, n):
-        return str(n.id)
-
-    def visit_NameConstant(self, nc):
-        return str(nc.value)
-
-    def visit_Call(self, c):
-        f = self.visit(c.func)
-        a = self.visicat(c.args, sep=' ')
-        return '(%s %s)' % (f, a) if a else '(%s)' % f
-    
-    def visit_If(self, i):
-        t = self.visit(i.test)
-        b = self.visicat(i.body)
-        o = self.visicat(i.orelse)
-        return '(if %s %s %s)' % (t, b, o)
-
-    def visit_IfExp(self, i):
-        import pdb; pdb.set_trace()
-        t = self.visit(i.test)
-        b = self.visit(i.body)
-        o = self.visit(i.orelse)
-        return '(if %s %s %s)' % (t, b, o)
-
-    def visit_Assign(self, a):
-        tgs = self.visicat(a.targets)
-        val = self.visit(a.value)
-        return '(setq %s %s)' % (tgs, val)
-
-    def visit_ClassDef(self, cd):
-        '''
-        <py>Class(name, [parent], body)
-            body ~ inst | FunctionDef
-        <el>Defclass(name. [parent], )
-        '''
-        return '(defclass %s (%s) %s)' % (cd.name, ' '.join(cd.bases), self.visicat(cd.body))
-
-    def visit_Tuple(self, t):
-        return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
-
-    def visit_Dict(self, d):
-        ks = ' '.join(self.visit(k) for k in d.keys)
-        vs = ' '.join(self.visit(v) for v in d.values)
-        return '(dict %s %s)' % (ks, vs)
-
+#         -- import name with optional 'as' alias.
+#         alias = (identifier name, identifier? asname)
+# }
+       
 
 class ElispyPrelude:
 
@@ -327,6 +474,20 @@ class ElispyPrelude:
         ((and (floatp a) (floatp b)) (+ a b))
         ((and (stringp a) (stringp b)) (string-join a b))
         (t (error (list a b :type-mismatch)))))
+
+(defclass PyObject ()
+  (add ...)
+  (sub ...)
+  (in ...)
+  (str ...)
+  (and ...))
+
+(defclass num (PyObject)
+  (str "num"))
+(defclass str (PyObject)
+  (str "str"))
+(defclass float (PyObject)
+  (str "float"))
 
 (setq None nil)
 
