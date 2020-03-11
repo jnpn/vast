@@ -31,15 +31,27 @@ def premain(visitor):
 def cli():
     pass
 
+def multiline(end=lambda inp: len(inp) < 1):
+    "-> [str]"
+    r = []
+    l = input()
+    while not end(l):
+        r.append(l)
+        l = input()
+    return r
+
+def is_exit(exp):
+    return exp == 'q' or exp == 'Q' or exp == 'quit' or exp == 'Quit' or exp == 'QUIT'
+
 @cli.command()
 def repl():
     while True:
         print(end='>>> ')
-        exp = input()
-        if exp == 'q' or exp == 'Q' or exp == 'quit' or exp == 'Quit' or exp == 'QUIT':
+        exp = multiline()
+        if exp[0] and is_exit(exp[0]):
             break
         else:
-            (py,el) = Source().of(exp).into(Elispy).transpile()
+            (py,el) = Source().of('\n'.join(exp)).into(Elispy).transpile()
             print('; =>', el)
     print('bye.')
 
