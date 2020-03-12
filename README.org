@@ -3,16 +3,19 @@
 
 * vast -- python to elisp transpiler
 
-** status very alpha
+** status alpha
 
 ** usage
    - git clone https://github.com/jnpn/vast.git
    - cd vast
-   - python main.py
+   - python main.py repl
    - >>> def f(x): return x + 1 RET
    - ;; elisp output
 
 * todos
+** DONE ternary if
+** DONE varargs
+** DONE multiline repl
 ** TODO implement list, set, map python API
 
    - rely on dash.el as a starting point ?
