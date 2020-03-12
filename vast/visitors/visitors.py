@@ -248,6 +248,12 @@ class Elispy(Meta):
         return '(%s %s %s)' % (o, l, r)
 
 # 	     | UnaryOp(unaryop op, expr operand)
+
+    def visit_UnaryOp(self, b):
+        o = self.visit(b.op)
+        a = self.visit(b.operand)
+        return '(%s %s)' % (o, a)
+
 # 	     | Lambda(arguments args, expr body)
 
     def visit_Lambda(self, l):
@@ -280,6 +286,7 @@ class Elispy(Meta):
 # 	     | ListComp(expr elt, comprehension* generators)
 # 	     | SetComp(expr elt, comprehension* generators)
 # 	     | DictComp(expr key, expr value, comprehension* generators)
+
 # 	     | GeneratorExp(expr elt, comprehension* generators)
 # 	     -- the grammar constrains where yield expressions can occur
 # 	     | Yield(expr? value)
@@ -339,11 +346,12 @@ class Elispy(Meta):
         return str(nc.value)
 
 # 	     | List(expr* elts, expr_context ctx) 
-# 	     | Tuple(expr* elts, expr_context ctx)
 
     def visit_List(self, l):
         e = self.visicat(l.elts, sep=' ')
         return '(list %s)' % e
+
+# 	     | Tuple(expr* elts, expr_context ctx)
 
     def visit_Tuple(self, t):
         return '(tuple %s)' % ' '.join(self.visit(e) for e in t.elts)
@@ -380,8 +388,11 @@ class Elispy(Meta):
     # cmpop list : Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
     # Boolean operators are simple names, the relationship is made by BoolOp
 
-    def visit_Is(self, a):
-        return 'eq'
+    def visit_Eq(self, e):
+        return 'equal'
+
+    def visit_NotEq(self, n):
+        return '(neg equal)'
 
     def visit_Lt(self, l):
         return '<'
@@ -389,13 +400,8 @@ class Elispy(Meta):
     def visit_Gt(self, g):
         return '>'
 
-    def visit_Eq(self, e):
-        return 'equal'
-
-    def visit_NotEq(self, n):
-        return '(neg equal)'
-
-    # TODO : missing cmpops
+    def visit_Is(self, a):
+        return 'eq'
 
     # operator list : operator = Add | Sub | Mult | Div | Mod | Pow | LShift | RShift | BitOr | BitXor | BitAnd | FloorDiv
 
