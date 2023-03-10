@@ -33,6 +33,10 @@ def load_file(filename):
     qs, qt = src.transpile()
     print(qs)
     print(qt)
+    elisp_file = filename.replace(".py", ".el")
+    with open(elisp_file, "w") as f:
+        print(qt, file=f)
+    print(f"Transpiled code saved to {elisp_file}")
 
 
 def repl():
