@@ -6,11 +6,30 @@
 ** status very alpha
 
 ** usage
-   - git clone https://github.com/jnpn/vast.git
-   - cd vast
-   - python main.py
-   - >>> def f(x): return x + 1 RET
+First you'll need to clone the repo and ~cd~ into the directory,
+#+BEGIN_SRC shell
+git clone https://github.com/jnpn/vast.git
+cd vast
+#+END_SRC
+
+The current implementation uses Python's [[https://docs.python.org/3/library/argparse.html][argparse]] library to take in command line
+arguments for ~-r~, ~--repl~, ~-f~ or ~--file~. Using the first two arguments will put you
+in a REPL, and you can use it as such:
+   - ~python main.py --repl~
+   - >>> ~def f(x): return x + 1 RET~
    - ;; elisp output
+
+Now if you choose the last two arguments you'll need to include the path to a Python file.
+If the python file is in the same directory then you can just do
+#+BEGIN_SRC shell
+python main.py --file <filename>
+#+END_SRC
+
+Though if your file is in a different directory then you'll need to include the path, such as
+#+BEGIN_SRC shell
+python main.py --file </path/to/filename>
+#+END_SRC
+
 
 * todos
 ** TODO implement list, set, map python API
