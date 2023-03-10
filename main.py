@@ -29,11 +29,10 @@ def repl():
     while True:
         print(end='>>> ')
         exp = input()
-        if exp == 'q' or exp == 'Q' or exp == 'quit' or exp == 'Quit' or exp == 'QUIT':
+        if exp in ('q', 'Q', 'quit', 'Quit', 'QUIT', 'exit', 'EXIT', 'Exit'):
             break
-        else:
-            (py,el) = Source().of(exp).into(Elispy).transpile()
-            print('; =>', el)
+        (py,el) = Source().of(exp).into(Elispy).transpile()
+        print('; =>', el)
     print('bye.')
 
 def oldmain():
