@@ -1,0 +1,20 @@
+[project]
+name = "vast"
+version = "0.0.1a"
+authors = [
+    {name = "Johan PONIN", email = "johan.ponin.pro@gmail.com"},
+]
+description = "Python to elisp (Emacs Lisp) transpiler."
+readme = "README.org"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+]
+dependencies = [
+    "click ~=8.1.3",
+]
