@@ -1,2 +1,4 @@
 __*
 /TAGS
+*.pyc
+__pycache__
