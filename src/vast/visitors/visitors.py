@@ -1,3 +1,6 @@
+# noqa: E731,E123,B906,B907
+# flake8-in-file-ignores: noqa: B906
+
 import ast
 
 
@@ -9,19 +12,19 @@ class Generic(ast.NodeVisitor):
     """
 
     def children(self, node):
-        return [node.__getattribute__(f) for f in node._fields]
+        return [getattr(node, f) for f in node._fields]
 
     @staticmethod
     def listp(x):
-        return type(x) is type([])
+        return isinstance(x, list)
 
     @staticmethod
     def atomp(x):
-        return type(x) is type("") or type(x) is type(0)
+        return isinstance(x, (str, int))
 
     @staticmethod
     def nilp(x):
-        return type(x) is type(None)
+        return isinstance(x, type(None))
 
     def rec_visit(self, node, ind=0, ins="-", inc=2, pre="`"):
         print(pre + (ins * ind), node.__class__.__name__)
@@ -30,9 +33,10 @@ class Generic(ast.NodeVisitor):
                 for __ in _:
                     self.rec_visit(__, ind=ind + inc)
             elif Generic.atomp(_):
-                print(pre + (ins * ind), "%s:%s" % (_, type(_).__name__))
+                typename = type(_).__name__
+                print(pre + (ins * ind), f"{_}:{typename}")
             elif Generic.nilp(_):
-                print(pre + (ins * ind), ".")  #'ℵ')
+                print(pre + (ins * ind), ".")  # 'ℵ')
             else:
                 self.rec_visit(_, ind=ind + inc)
 
@@ -54,31 +58,36 @@ class Meta(Generic):
         nodefields = list(ast.iter_fields(node))
         node_ = list(ast.iter_child_nodes(node))
         print("[warn]", nodename, nodefields, node_)
-        print("[warn]", "<visit_%s not implemented in %s>" % (nodename, visitorname))
+        print(
+            "[warn]",
+            f"<visit_{nodename} not implemented in {visitorname}>",
+        )
 
     def visicat(self, subs, sep="."):
         """Mapconcat self.visit over [astnodes]."""
         return sep.join([self.visit(sub) for sub in (subs or [])])
 
     def syntax(self, name, sub, beg="<", end=">", pre="meta:"):
-        return "%s%s%s %s%s" % (beg, pre, name, sub, end)
+        return f"{beg}{pre}{name} {sub}{end}"
 
     def field(self, name, node, fmt="%s=%s"):
         return fmt % (name, node)
 
     def meta_visit(self, node):
         def dispatch(node):
-            if type(node) is type([]):
+            if isinstance(node, list):
                 return self.visicat(node, sep=" ")
-            else:
-                return self.visit(node)
+            return self.visit(node)
 
         fields = ast.iter_fields(node)
-        vfields = " ".join(self.field(name, dispatch(node)) for name, node in fields)
+        vfields = " ".join(
+            self.field(name, dispatch(node))
+            for name, node in fields
+        )
         return self.syntax(node.__class__.__name__, vfields)
 
     def generic_visit(self, node):
-        if super().atomp(node) or super().nilp(node):
+        if super().atomp(node) or super().nilp(node):  # noqa
             return node
         elif super().listp(node):
             if len(node) == 1:
@@ -91,6 +100,7 @@ class Meta(Generic):
                     "node is a list of size > 1, "
                     "elements above 1 are ignored (@TOFIX)",
                 )
+            return None
         else:
             return self.meta_visit(node)
 
@@ -104,14 +114,14 @@ class Flispy(Meta):
     in order to get closer to Lisp Meta Language
     """
 
-    def syntax(self, name, sub):
-        return super().syntax(name, sub, pre="", beg="(", end=")")
+    def syntax(self, name, sub, beg="(", end=")", pre=""):
+        return super().syntax(name, sub, beg=beg, end=end, pre=pre)
 
-    def field(self, name, node):
-        return super().field("", node, fmt="%s%s")
+    def field(self, name, node, fmt="%s%s"):
+        return super().field("", node, fmt=fmt)
 
 
-class Elispy(Meta):
+class Elispy(Meta):  # noqa
 
     """
     Elisp pretty printer (partial), inherits generic printer
@@ -141,12 +151,16 @@ class Elispy(Meta):
         a = self.visit(f.args)
         if len(f.body) <= 1:
             b = "\n    ".join([self.visit(_) for _ in f.body])
-            return "(defun %s (%s)\n  %s)" % (f.name, a, b)
-        else:
-            b = "\n    ".join([self.visit(_) for _ in f.body])
-            return "(defun %s (%s)\n  (progn\n    %s))" % (f.name, a, b)
+            return f"(defun {f.name} ({a})\n  {b})"
+        b = "\n    ".join([self.visit(_) for _ in f.body])
+        return f"(defun {f.name} ({a})\n  (progn\n    {b}))"
 
-    #             | ClassDef(identifier name, expr* bases, stmt* body, expr* decorator_list)
+    #             | ClassDef(
+    #               identifier name,
+    #               expr* bases,
+    #               stmt* body,
+    #               expr* decorator_list
+    #               )
 
     def visit_ClassDef(self, cd):
         """
@@ -154,11 +168,9 @@ class Elispy(Meta):
             body ~ inst | FunctionDef
         <el>Defclass(name. [parent], )
         """
-        return "(defclass %s (%s) %s)" % (
-            cd.name,
-            " ".join(b.id for b in cd.bases),
-            self.visicat(cd.body),
-        )
+        bases = " ".join(b.id for b in cd.bases)
+        body = self.visicat(cd.body)
+        return f"(defclass {cd.name} ({bases}) {body})"
 
     #             | Return(expr? value)
 
@@ -172,7 +184,7 @@ class Elispy(Meta):
     def visit_Assign(self, a):
         tgs = self.visicat(a.targets)
         val = self.visit(a.value)
-        return "(setq %s %s)" % (tgs, val)
+        return f"(setq {tgs} {val})"
 
     #             | AugAssign(expr target, operator op, expr value)
 
@@ -187,7 +199,7 @@ class Elispy(Meta):
         i = self.visit(f.iter)
         bs = self.visicat(f.body)
         os = self.visit(f.orelse)
-        return "(each (lambda (%s) %s %s) %s)" % (t, bs, os, i)
+        return f"(each (lambda ({t}) {bs} {os}) {i})"
 
     #             | While(expr test, stmt* body, stmt* orelse)
     #             | If(expr test, stmt* body, stmt* orelse)
@@ -196,7 +208,7 @@ class Elispy(Meta):
         t = self.visit(i.test)
         b = self.visicat(i.body)
         o = self.visicat(i.orelse)
-        return "(if %s %s %s)" % (t, b, o)
+        return f"(if {t} {b} {o})"
 
     #             | With(expr context_expr, expr? optional_vars, stmt* body)
 
@@ -209,11 +221,13 @@ class Elispy(Meta):
     #             | Import(alias* names)
 
     def visit_Import(self, i):
-        req = (
-            lambda n: "(require '%s :as '%s)" % (n.name, n.asname)
-            if n.asname
-            else "(require '%s)" % n.name
-        )
+        def req(n):
+            return (
+                f"(require '{n.name} :as '{n.asname})"
+                if n.asname
+                else f"(require '{n.name})"
+            )
+
         return "\n".join(req(n) for n in i.names)
 
     #             | ImportFrom(identifier? module, alias* names, int? level)
@@ -232,11 +246,12 @@ class Elispy(Meta):
 
     #             | Pass | Break | Continue
 
-    def visit_Pass(self, p):
+    def visit_Pass(self, _):
         return "(progn)"
 
     #             -- XXX Jython will be different
-    #             -- col_offset is the byte offset in the utf8 string the parser uses
+    #             -- col_offset is the byte offset in the utf8 string
+    #                the parser uses
     #             attributes (int lineno, int col_offset)
 
     #             -- BoolOp() can use left & right?
@@ -244,53 +259,52 @@ class Elispy(Meta):
 
     def visit_BoolOp(self, b):
         vals = " ".join([self.visit(v) for v in b.values])
-        return "(%s %s)" % (self.visit(b.op), vals)
+        op = self.visit(b.op)
+        return f"({op} {vals})"
 
     #            | BinOp(expr left, operator op, expr right)
 
     def visit_BinOp(self, b):
         o = self.visit(b.op)
-        l = self.visit(b.left)
-        r = self.visit(b.right)
-        return "(%s %s %s)" % (o, l, r)
+        el = self.visit(b.left)
+        er = self.visit(b.right)
+        return f"({o} {el} {er})"
 
     #            | UnaryOp(unaryop op, expr operand)
 
     def visit_UnaryOp(self, b):
         o = self.visit(b.op)
         a = self.visit(b.operand)
-        return "(%s %s)" % (o, a)
+        return f"({o} {a})"
 
     #            | Lambda(arguments args, expr body)
 
-    def visit_Lambda(self, l):
-        a = self.visit(l.args)
-        b = self.visit(l.body)
-        return "(lambda (%s) %s)" % (a, b)
+    def visit_Lambda(self, lam):
+        a = self.visit(lam.args)
+        b = self.visit(lam.body)
+        return f"(lambda ({a} {b})"
 
     #            | IfExp(expr test, expr body, expr orelse)
 
     def visit_IfExp(self, i):
-        import pdb
-
-        pdb.set_trace()
         t = self.visit(i.test)
         b = self.visit(i.body)
         o = self.visit(i.orelse)
-        return "(if %s %s %s)" % (t, b, o)
+        return f"(if {t} {b} {o})"
 
     #            | Dict(expr* keys, expr* values)
 
     def visit_Dict(self, d):
         ks = " ".join(self.visit(k) for k in d.keys)
         vs = " ".join(self.visit(v) for v in d.values)
-        return "(dict %s %s)" % (ks, vs)
+        return f"(dict {ks} {vs})"
 
     #            | Set(expr* elts)
 
     def visit_Set(self, s):
         print(s._fields)
-        return "(Set %s)" % " ".join(self.visit(e) for e in s.elts)
+        elts = " ".join(self.visit(e) for e in s.elts)
+        return f"(Set {elts})"
 
     #            | ListComp(expr elt, comprehension* generators)
     #            | SetComp(expr elt, comprehension* generators)
@@ -304,10 +318,13 @@ class Elispy(Meta):
     #            | Compare(expr left, cmpop* ops, expr* comparators)
 
     def visit_Compare(self, c):
-        l = self.visit(c.left)
+        el = self.visit(c.left)
         o = " ".join([self.visit(_) for _ in c.ops]) if c.ops else ""
-        c = " ".join([self.visit(_) for _ in c.comparators]) if c.comparators else ""
-        return "(%s %s %s)" % (o, l, c)
+        c = " ".join([
+            self.visit(_)
+            for _ in c.comparators
+        ]) if c.comparators else ""
+        return f"({o} {el} {c})"
 
     #            | Call(expr func, expr* args, keyword* keywords,
     #                        expr? starargs, expr? kwargs)
@@ -315,7 +332,7 @@ class Elispy(Meta):
     def visit_Call(self, c):
         f = self.visit(c.func)
         a = self.visicat(c.args, sep=" ")
-        return "(%s %s)" % (f, a) if a else "(%s)" % f
+        return f"({f} {a})" if a else "({f})"
 
     #            | Repr(expr value)
     #            | Num(object n) -- a number as a PyObject.
@@ -327,7 +344,7 @@ class Elispy(Meta):
     #            -- other literals? bools?
 
     def visit_Str(self, s):
-        return '"%s"' % s.s
+        return f'"{s.s}"'
 
     #            -- the following expression can appear in assignment context
     #            | Attribute(expr value, identifier attr, expr_context ctx)
@@ -336,7 +353,7 @@ class Elispy(Meta):
         v = self.visit(a.value)
         at = self.visit(a.attr)
         # return '(lambda (_) (. %s %s _))' % (v, at)
-        return "(. %s %s)" % (v, at)
+        return f"(. {v} {at})"
 
     #            | Subscript(expr value, slice slice, expr_context ctx)
 
@@ -344,7 +361,7 @@ class Elispy(Meta):
         v = self.visit(s.value)
         s = self.visit(s.slice)
         # c = self.visit(s.ctx)
-        return "(sub %s %s)" % (v, s)
+        return f"(sub {v} {s})"
 
     #            | Name(identifier id, expr_context ctx)
 
@@ -356,33 +373,35 @@ class Elispy(Meta):
 
     #            | List(expr* elts, expr_context ctx)
 
-    def visit_List(self, l):
-        e = self.visicat(l.elts, sep=" ")
-        return "(list %s)" % e
+    def visit_List(self, li):
+        e = self.visicat(li.elts, sep=" ")
+        return f"(list {e})"
 
     #            | Tuple(expr* elts, expr_context ctx)
 
     def visit_Tuple(self, t):
-        return "(tuple %s)" % " ".join(self.visit(e) for e in t.elts)
+        elts = " ".join(self.visit(e) for e in t.elts)
+        return f"(tuple {elts})"
 
-    #             -- col_offset is the byte offset in the utf8 string the parser uses
+    #             -- col_offset is the byte offset in the utf8 string
+    #                the parser uses
     #             attributes (int lineno, int col_offset)
 
     #       expr_context = Load | Store | Del | AugLoad | AugStore | Param
 
     #       slice = Ellipsis
 
-    def visit_Ellipsis(self, e):
+    def visit_Ellipsis(self, _):
         return "core.ellipsis"
 
     #  | Slice(expr? lower, expr? upper, expr? step)
 
     def visit_Slice(self, s):
-        l = self.visit(s.lower) if s.lower else ""
-        u = self.visit(s.upper) if s.upper else ""
+        lo = self.visit(s.lower) if s.lower else ""
+        up = self.visit(s.upper) if s.upper else ""
         s = self.visit(s.step) if s.step else ""
         # rewrite as if-concat
-        return " ".join([_ for _ in [l, u, s] if _ != ""])
+        return " ".join([_ for _ in [lo, up, s] if _ != ""])
 
     #             | ExtSlice(slice* dims)
     #             | Index(expr value)
@@ -393,39 +412,42 @@ class Elispy(Meta):
 
     #       boolop = And | Or
 
-    def visit_And(self, a):
+    def visit_And(self, _):
         return "and"
 
-    def visit_Or(self, o):
+    def visit_Or(self, _):
         return "or"
 
     # cmpop list : Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
     # Boolean operators are simple names, the relationship is made by BoolOp
 
-    def visit_Eq(self, e):
+    def visit_Eq(self, _):
         return "equal"
 
-    def visit_NotEq(self, n):
+    def visit_NotEq(self, _):
         return "(neg equal)"
 
-    def visit_Lt(self, l):
+    def visit_Lt(self, _):
         return "<"
 
-    def visit_Gt(self, g):
+    def visit_Gt(self, _):
         return ">"
 
-    def visit_Is(self, a):
+    def visit_Is(self, _):
         return "eq"
 
-    # operator list : operator = Add | Sub | Mult | Div | Mod | Pow | LShift | RShift | BitOr | BitXor | BitAnd | FloorDiv
+    # operator list : operator =
+    #   Add | Sub | Mult | Div | Mod | Pow
+    # | LShift | RShift | BitOr | BitXor | BitAnd
+    # | FloorDiv
 
-    def visit_Add(self, a):
+    def visit_Add(self, _):
         return "generic-add"
 
-    def visit_Sub(self, s):
+    def visit_Sub(self, _):
         return "-"
 
-    def visit_Mult(self, m):
+    def visit_Mult(self, _):
         return "*"
 
     #       operator = Add | Sub | Mult | Div | Mod | Pow | LShift
@@ -445,13 +467,14 @@ class Elispy(Meta):
 
     #     print(list((n, self.visit(e)) for n, e in ast.iter_fields(l)))
     #     return '(@TOFIX filter (...) (map (...) ...))'
-    #     return ' '.join([self.visit(node) for name, node in ast.iter_fields(l)])
+    #     return ' '.join([self.visit(node)
+    #            for name, node in ast.iter_fields(l)])
 
     def visit_Comprehension(self, c):
         t = self.visit(c.target)
         i = self.visit(c.iter)
         ifs = self.visicat(c.ifs)
-        return "(map (lambda (%s) %s) %s)" % (t, i, ifs)
+        return f"(map (lambda ({t}) {i}) {ifs})"
 
     #       -- not sure what to call the first argument for raise and except
     #       excepthandler = ExceptHandler(expr? type, expr? name, stmt* body)
@@ -464,18 +487,17 @@ class Elispy(Meta):
         p = " ".join([_.arg for _ in a.args]) if a.args else ""
         k = " ".join([_.arg for _ in a.kwarg]) if a.kwarg else ""
         v = f"&rest {a.vararg.arg}" if a.vararg.arg else ""
-        if len(a.defaults):
+        n = len(a.defaults)
+        if n:
             #     args =     (a,b,c,d,...)
             #     defaults =     (v,w,...)
             # ->  pos,opt = (a,b)(c,d,...)
-            l = len(a.defaults)
-            pos = a.args[:-l]
-            opt = a.args[-l:]
+            pos = a.args[:-n]
+            opt = a.args[-n:]
             p = " ".join([_.arg for _ in pos]) if pos else ""
             d = ("&optional " + " ".join([_.arg for _ in opt])) if opt else ""
-            return ("%s %s %s %s" % (p, k, d, v)).strip()
-        else:
-            return ("%s %s %s" % (p, k, v)).strip()
+            return f"{p} {k} {d} {v}".strip()
+        return f"{p} {k} {v}".strip()
 
 
 #         -- keyword arguments supplied to call

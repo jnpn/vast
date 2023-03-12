@@ -65,35 +65,40 @@ class Defaulted(Desugar):
     >>> kw(1,2,**{'c':11, 'd':22, 'e':'e'})
     """
 
-    def visit_FunctionDef(self, fd):
+    def visit_FunctionDef(self, f):
         # import codegen # ?
 
-        def default_bindings(fd):
-            return zip(reversed(fd.args.args), reversed(fd.args.defaults))
+        def default_bindings(f):
+            return zip(
+                reversed(f.args.args),
+                reversed(f.args.defaults),
+                strict=True,
+            )
 
-        def binding_to_assign(arg, val):
-            return ast.Assign([ast.Name(arg.arg, ast.Load())], val)
+        # def binding_to_assign(arg, val):
+        #     return ast.Assign([ast.Name(arg.arg, ast.Load())], val)
 
         def assign_or_default(arg, val):
             return ast.Assign(
-                [ast.Name(arg.arg, ast.Load())], ast.BoolOp(ast.Or(), [arg.arg, val])
+                [ast.Name(arg.arg, ast.Load())],
+                ast.BoolOp(ast.Or(), [arg.arg, val]),
             )
 
-        args = fd.args.args
-        defaults = fd.args.defaults
-        body = fd.body
-        prologue = [assign_or_default(arg, val) for arg, val in default_bindings(fd)]
+        body = f.body
+        prologue = [
+            assign_or_default(arg, val)
+            for arg, val in default_bindings(f)
+        ]
 
-        fd.body = list(reversed(prologue)) + body
-        # fd.args.defaults = []
-        return fd
+        f.body = list(reversed(prologue)) + body
+        return f
 
 
 class ListComp(Desugar):
     """see README"""
 
     def visit_ListComp(self, node):
-        pass
+        """TODO"""
 
 
 class Comp(Desugar):
@@ -105,15 +110,11 @@ class Comp(Desugar):
     make it a super class of ListComp(Desugar) ?
     """
 
-    pass
-
 
 class Import(Desugar):
     """
     ahaha.. ha. hhhu T_T
     """
-
-    pass
 
 
 # def f(x):

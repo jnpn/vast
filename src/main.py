@@ -37,15 +37,15 @@ def cli():
 def multiline(end=lambda inp: len(inp) < 1):
     "-> [str]"
     r = []
-    l = input()
-    while not end(l):
-        r.append(l)
-        l = input()
+    inp = input()
+    while not end(inp):
+        r.append(inp)
+        inp = input()
     return r
 
 
 def is_exit(exp):
-    return exp == "q" or exp == "Q" or exp == "quit" or exp == "Quit" or exp == "QUIT"
+    return exp in ["q", "Q", "quit", "Quit", "QUIT"]
 
 
 @cli.command()
@@ -55,9 +55,8 @@ def repl():
         exp = multiline()
         if exp[0] and is_exit(exp[0]):
             break
-        else:
-            (py, el) = Source().of("\n".join(exp)).into(Elispy).transpile()
-            print("; =>", el)
+        (_, el) = Source().of("\n".join(exp)).into(Elispy).transpile()
+        print("; =>", el)
     print("bye.")
 
 
@@ -85,7 +84,8 @@ def main():
 
 
 @cli.command()
-def compile(filename):
+@click.argument("filename")
+def transpile(filename):
     s = Source().load(filename).into(Elispy)
     qs, qt = s.transpile()
     print(qs)

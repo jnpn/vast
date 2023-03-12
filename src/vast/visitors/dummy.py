@@ -5,10 +5,10 @@ class Dummy(ast.NodeVisitor):
 
     """Old useless visitor as grammar learning code."""
 
-    def visit_Sub(self, s):
+    def visit_Sub(self, _):
         print("SUB")
 
-    def visit_Mult(self, m):
+    def visit_Mult(self, _):
         print("MULT")
 
     def visit_Num(self, n):
@@ -21,14 +21,14 @@ class Dummy(ast.NodeVisitor):
         self.visit(b.right)
         print("}")
 
-    def visit_Lt(self, l):
+    def visit_Lt(self, _):
         print("<")
 
-    def visit_Gt(self, g):
+    def visit_Gt(self, _):
         print(">")
 
     def visit_FunctionDef(self, f):
-        print("LET %s = " % f.name)
+        print(f"LET {f.name} = ")
         self.visit(f.args)
         for _ in f.body:
             self.visit(_)
@@ -46,8 +46,8 @@ class Dummy(ast.NodeVisitor):
         print("RET")
         self.visit(r.value)
 
-    def visit_Name(self, n):
-        print("$%s" % n.id)
+    def visit_Name(self, n):  # noqa
+        print(f"${n.id}")
 
     def visit_Call(self, c):
         print("CALL")

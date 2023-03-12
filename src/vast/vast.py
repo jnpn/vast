@@ -1,9 +1,7 @@
 import ast
 from subprocess import PIPE, Popen
 
-from snippets import snippets
-from vast.transformers.transformer import Desugar
-from vast.visitors.visitors import Elispy, Generic
+from .visitors.visitors import Elispy, Generic
 
 
 class Source:
@@ -19,7 +17,7 @@ class Source:
         self.fn = fn
 
     def load(self, fn):
-        with open(fn) as src:
+        with open(fn, encoding="utf8") as src:
             self.source = "".join(src.readlines())
         return self
 
@@ -36,7 +34,7 @@ class Source:
         return self
 
     def __repr__(self):
-        return "<Source [%s]>" % self.source
+        return f"<Source {self.source}>"
 
     def talk(self):
         return list(ast.walk(ast.parse(self.source)))
@@ -52,7 +50,7 @@ class Source:
         return Generic().visit(a)
 
     def quotecode(self, code):
-        return "```\n%s\n```" % code
+        return f"```\n{code}\n```"
 
     def emacs_eval(self):
         """
@@ -60,22 +58,22 @@ class Source:
         to `emacs` for evaluation.
         """
 
-        assert Popen(["which", "emacs"], stdout=PIPE, stderr=PIPE).stderr != b""
+        with Popen(["which", "emacs"], stdout=PIPE, stderr=PIPE) as which:
+            assert which.stderr != b""
 
         wrapper = '(message "%%S" (progn %s))'
         # http://www.emacswiki.org/emacs/BatchMode
         code = self.visitor().visit(ast.parse(self.source))
-        emacs = Popen(
-            ["emacs", "-batch", "--eval", wrapper % code], stderr=PIPE, stdout=PIPE
-        )
-        return emacs.stderr.read().decode("utf8")
+        cmd = ["emacs", "-batch", "--eval", wrapper % code]
+        with Popen(cmd, stderr=PIPE, stdout=PIPE) as emacs:
+            return emacs.stderr.read().decode("utf8")
 
     def transpile(self):
-        qs = self.quotecode("## %s (Python|source)\n" % self.fn + self.source)
+        qs = self.quotecode(f"## {self.fn} (Python|source)\n" + self.source)
         ast0 = ast.parse(self.source)
         print("[transpile][pre]", ast.dump(ast0))
         ast1 = ast0 if not self.transformer else self.transformer().visit(ast0)
         print("[transpile][post]", ast.dump(ast1))
         tgt = self.visitor().visit(ast1)
-        qt = self.quotecode(";; %s (Lisp|target)\n" % self.fn + "\n%s\n" % tgt)
+        qt = self.quotecode(f";; {self.fn} (Lisp|target)\n\n{tgt}\n")
         return qs, qt
