@@ -3,3 +3,4 @@ __*
 *.pyc
 __pycache__
 *~
+*.coverage
