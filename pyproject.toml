@@ -59,4 +59,6 @@ disable = [
     "R0903", # (too-few-public-methods)
     "R0913", # (too-many-arguments)
     "W0105", # (pointless-string-statement)
+    "R1705", # (no-else-return)
+    "R0904", # (too-many-public-methods)
 ]
