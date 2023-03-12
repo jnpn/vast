@@ -1,6 +1,6 @@
 # Definitions
 
-sfact = '''
+sfact = """
 def fact(n):
     if (n < 2):
         return 1
@@ -8,50 +8,50 @@ def fact(n):
         return n * fact(n - 1)
 
 [fact(5), fact(10)]
-'''
+"""
 
-swrap = '''
+swrap = """
 def l(n):
     return [n]
-'''
+"""
 
-sfor = '''
+sfor = """
 def c():
     return [x+x+1 for x in [1,2,3,4] if x % 2]
-'''
+"""
 
-smap = '''
+smap = """
 def map(f, l):
     if len(l) == 0:
         return []
     return [f(l[0])] + map(f, l[1:])
-'''
+"""
 
-ssetcomp = '''
+ssetcomp = """
 def sc(a,b):
-    return {x for x in 
+    return {x for x in
            [e for e in
             range(10) if e > 0 and e < 5
                       if e + 1 < 4]}
-'''
+"""
 
-sclass = '''
+sclass = """
 class X:
     x=1
     def wat(self, x):
         return x
-'''
+"""
 
-slam = '''
+slam = """
 lambda x: x
-'''
+"""
 
 snippets = {
-    'setcomp': ssetcomp,
-    'factorial': sfact,
-    'wrap': swrap,
-    'for': sfor,
-    'map': smap,
-    'lambda': slam,
-    'class': sclass
+    "setcomp": ssetcomp,
+    "factorial": sfact,
+    "wrap": swrap,
+    "for": sfor,
+    "map": smap,
+    "lambda": slam,
+    "class": sclass,
 }
