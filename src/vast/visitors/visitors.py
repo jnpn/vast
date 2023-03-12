@@ -382,7 +382,7 @@ class Elispy(Meta):
         u = self.visit(s.upper) if s.upper else ""
         s = self.visit(s.step) if s.step else ""
         # rewrite as if-concat
-        return " ".join([_ for _ in [l, u, s] if _ is not ""])
+        return " ".join([_ for _ in [l, u, s] if _ != ""])
 
     #             | ExtSlice(slice* dims)
     #             | Index(expr value)

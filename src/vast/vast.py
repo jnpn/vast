@@ -60,7 +60,7 @@ class Source:
         to `emacs` for evaluation.
         """
 
-        assert Popen(["which", "emacs"], stdout=PIPE, stderr=PIPE).stderr is not b""
+        assert Popen(["which", "emacs"], stdout=PIPE, stderr=PIPE).stderr != b""
 
         wrapper = '(message "%%S" (progn %s))'
         # http://www.emacswiki.org/emacs/BatchMode
