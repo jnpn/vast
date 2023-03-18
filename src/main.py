@@ -60,6 +60,19 @@ def repl():
     print("bye.")
 
 
+@cli.command()
+@click.argument("filename")
+def load_file(filename):
+    src = Source().load(filename).into(Elispy)
+    qs, qt = src.transpile()
+    print(qs)
+    print(qt)
+    elisp_file = filename.replace(".py", ".el")
+    with open(elisp_file, "w") as f:
+        print(qt, file=f)
+    print(f"Transpiled code saved to {elisp_file}")
+
+
 def oldmain():
     print("-- Elispy")
     print("--  Python to Elisp pretty printer")

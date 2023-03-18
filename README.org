@@ -3,14 +3,27 @@
 * vast -- python to elisp transpiler [alpha]
 
 ** usage
-
-#+begin_src shell
+To setup Vast you first need to clone it with
+#+BEGIN_SRC shell
    git clone https://github.com/jnpn/vast.git
    cd vast
+#+END_SRC
+
+Now that you have it cloned, Vast can be used either as a REPL, 
+#+begin_src shell
    python src/main.py repl
    >>> def f(x): return x + 1 RET
    ;; elisp output
 #+end_src
+
+Or Vast can be passed a file to transpile, 
+
+#+BEGIN_SRC shell
+python src/main.py load-file "</path/to/file.py>"
+#+END_SRC
+
+which will then print out the transpiled code into the terminal as well as write it to
+a file with the same filename, but ending in ~.el~.
 
 ** tests
 
