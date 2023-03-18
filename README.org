@@ -10,14 +10,14 @@ To setup Vast you first need to clone it with
    cd vast
 #+END_SRC
 
-Now that you have it cloned, Vast can be used either as a REPL, 
+Now that you have it cloned, Vast can be used either as a REPL,
 #+begin_src shell
    python src/main.py repl
    >>> def f(x): return x + 1 RET
    ;; elisp output
 #+end_src
 
-Or Vast can be passed a file to transpile, 
+Or Vast can be passed a file to transpile,
 
 #+BEGIN_SRC shell
 python src/main.py load-file "</path/to/file.py>"
