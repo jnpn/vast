@@ -36,20 +36,25 @@ def cli():
 
 def multiline(end=lambda inp: len(inp) < 1):
     "-> [str]"
-    r = []
+    tokens = []
     inp = input()
     while not end(inp):
-        r.append(inp)
+        if "def" in inp or "    " in inp or "\t" in inp:
+            print(end="... ")
+        else:
+            print(end=">>> ")
+        tokens.append(inp)
         inp = input()
-    return r
+    return tokens
 
 
 def is_exit(exp):
-    return exp in ["q", "Q", "quit", "Quit", "QUIT"]
+    return exp in ["q", "Q", "quit", "Quit", "QUIT", "exit", "Exit", "exit()"]
 
 
 @cli.command()
 def repl():
+    print("-- Elispy")
     while True:
         print(end=">>> ")
         exp = multiline()
