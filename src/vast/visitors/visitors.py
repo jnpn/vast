@@ -486,7 +486,7 @@ class Elispy(Meta):  # noqa
     def visit_arguments(self, a):
         p = " ".join([_.arg for _ in a.args]) if a.args else ""
         k = " ".join([_.arg for _ in a.kwarg]) if a.kwarg else ""
-        v = f"&rest {a.vararg.arg}" if a.vararg.arg else ""
+        v = f"&rest {a.vararg.arg}" if a.vararg else ""
         n = len(a.defaults)
         if n:
             #     args =     (a,b,c,d,...)
